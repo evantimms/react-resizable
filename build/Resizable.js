@@ -170,7 +170,7 @@ var Resizable = function (_React$Component) {
       }
       // If we have a resize handle being dragged left X wise, we need to apply a special offset transform
       var inverted = false;
-      if (axis.includes('w') && widthChanged) {
+      if (axis.includes('w')) {
         inverted = true;
       }
       var hasCb = typeof _this2.props[handlerName] === 'function';
