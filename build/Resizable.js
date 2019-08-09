@@ -43,7 +43,8 @@ var Resizable = function (_React$Component) {
     return _ret = (_temp = (_this = _possibleConstructorReturn(this, _React$Component.call.apply(_React$Component, [this].concat(args))), _this), _this.state = {
       resizing: false,
       width: _this.props.width, height: _this.props.height,
-      slackW: 0, slackH: 0
+      slackW: 0, slackH: 0,
+      prevDelta: [0, 0]
     }, _temp), _possibleConstructorReturn(_this, _ret);
   }
 
@@ -162,17 +163,27 @@ var Resizable = function (_React$Component) {
       } else if (handlerName === 'onResizeStop') {
         newState.resizing = false;
         newState.slackW = newState.slackH = 0;
+        // record delta for next iteration as 0
+        newState.prevDelta = [0, 0];
       } else {
         // Early return if no change after constraints
         if (width === _this2.state.width && height === _this2.state.height) return;
         newState.width = width;
         newState.height = height;
+
+        // Take average of previous delta and current, helps to make things flow 'smoother'
+        deltaX = Math.round((_this2.state.prevDelta[0] + deltaX) / 2);
+        deltaY = Math.round((_this2.state.prevDelta[1] + deltaY) / 2);
+
+        // record delta for next iteration
+        newState.prevDelta = [deltaX, deltaY];
       }
       // If we have a resize handle being dragged left X wise, we need to apply a special offset transform
       var inverted = false;
       if (axis.includes('w')) {
         inverted = true;
       }
+
       var hasCb = typeof _this2.props[handlerName] === 'function';
       if (hasCb) {
         // $FlowIgnore isn't refining this correctly to SyntheticEvent

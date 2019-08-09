@@ -10,7 +10,8 @@ type ResizeHandle = 's' | 'w' | 'e' | 'n' | 'sw' | 'nw' | 'se' | 'ne';
 type State = {
   resizing: boolean,
   width: number, height: number,
-  slackW: number, slackH: number
+  slackW: number, slackH: number,
+  prevDelta: [ number, number ]
 };
 type DragCallbackData = {
   node: HTMLElement,
@@ -111,7 +112,8 @@ export default class Resizable extends React.Component<Props, State> {
   state: State = {
     resizing: false,
     width: this.props.width, height: this.props.height,
-    slackW: 0, slackH: 0
+    slackW: 0, slackH: 0,
+    prevDelta: [0,0]
   };
 
   componentWillReceiveProps(nextProps: Object) {
@@ -209,17 +211,27 @@ export default class Resizable extends React.Component<Props, State> {
       } else if (handlerName === 'onResizeStop') {
         newState.resizing = false;
         newState.slackW = newState.slackH = 0;
+        // record delta for next iteration as 0
+      newState.prevDelta = [ 0, 0 ];
       } else {
         // Early return if no change after constraints
         if (width === this.state.width && height === this.state.height) return;
         newState.width = width;
         newState.height = height;
+        
+        // Take average of previous delta and current, helps to make things flow 'smoother'
+        deltaX = Math.round((this.state.prevDelta[0] + deltaX) / 2);
+        deltaY = Math.round((this.state.prevDelta[1] + deltaY) / 2);
+        
+        // record delta for next iteration
+        newState.prevDelta = [ deltaX, deltaY ];
       }
       // If we have a resize handle being dragged left X wise, we need to apply a special offset transform
       let inverted = false;
       if (axis.includes('w')) {
         inverted = true;
       }
+
       const hasCb = typeof this.props[handlerName] === 'function';
       if (hasCb) {
         // $FlowIgnore isn't refining this correctly to SyntheticEvent
