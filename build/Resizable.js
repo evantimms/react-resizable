@@ -142,6 +142,11 @@ var Resizable = function (_React$Component) {
       if (canDragY && axis[0] === 'n') {
         deltaY = -deltaY;
       }
+      var prevDelta = _this2.state.prevDelta;
+
+      // This is to solve an issue where the left resize handle would not correctly give the delta
+
+      deltaX = deltaX > 0 && prevDelta[0] < 0 || deltaX < 0 && prevDelta[0] > 0 ? 0 : deltaX;
 
       // Update w/h
       var width = _this2.state.width + (canDragX ? deltaX : 0);
@@ -170,10 +175,6 @@ var Resizable = function (_React$Component) {
         if (width === _this2.state.width && height === _this2.state.height) return;
         newState.width = width;
         newState.height = height;
-
-        // Take average of previous delta and current, helps to make things flow 'smoother'
-        deltaX = Math.round((_this2.state.prevDelta[0] + deltaX) / 2);
-        deltaY = Math.round((_this2.state.prevDelta[1] + deltaY) / 2);
 
         // record delta for next iteration
         newState.prevDelta = [deltaX, deltaY];
