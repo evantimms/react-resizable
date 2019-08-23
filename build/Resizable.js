@@ -44,7 +44,7 @@ var Resizable = function (_React$Component) {
       resizing: false,
       width: _this.props.width, height: _this.props.height,
       slackW: 0, slackH: 0,
-      prevDelta: [0, 0]
+      prevClient: [null, null]
     }, _temp), _possibleConstructorReturn(_this, _ret);
   }
 
@@ -130,11 +130,18 @@ var Resizable = function (_React$Component) {
           deltaX = _ref2.deltaX,
           deltaY = _ref2.deltaY;
 
-
+      // If we have a resize handle being dragged left X wise, we need to apply a special offset transform
+      var inverted = false;
+      if (axis.includes('w')) {
+        inverted = true;
+      }
+      // Get the client mouse location
+      var clientX = e.clientX,
+          clientY = e.clientY;
       // Axis restrictions
+
       var canDragX = (_this2.props.axis === 'both' || _this2.props.axis === 'x') && ['n', 's'].indexOf(axis) === -1;
       var canDragY = (_this2.props.axis === 'both' || _this2.props.axis === 'y') && ['e', 'w'].indexOf(axis) === -1;
-
       // reverse delta if using top or left drag handles
       if (canDragX && axis[axis.length - 1] === 'w') {
         deltaX = -deltaX;
@@ -142,11 +149,12 @@ var Resizable = function (_React$Component) {
       if (canDragY && axis[0] === 'n') {
         deltaY = -deltaY;
       }
-      var prevDelta = _this2.state.prevDelta;
+      var prevClient = _this2.state.prevClient;
 
-      // This is to solve an issue where the left resize handle would not correctly give the delta
+      // Calculate true deltas
 
-      deltaX = deltaX > 0 && prevDelta[0] < 0 || deltaX < 0 && prevDelta[0] > 0 ? 0 : deltaX;
+      deltaX = prevClient[0] ? inverted ? prevClient[0] - clientX : clientX - prevClient[0] : deltaX;
+      deltaY = prevClient[1] ? clientY - prevClient[1] : deltaY;
 
       // Update w/h
       var width = _this2.state.width + (canDragX ? deltaX : 0);
@@ -165,24 +173,20 @@ var Resizable = function (_React$Component) {
       var newState = {};
       if (handlerName === 'onResizeStart') {
         newState.resizing = true;
+        newState.prevClient = [clientX, clientY];
       } else if (handlerName === 'onResizeStop') {
         newState.resizing = false;
         newState.slackW = newState.slackH = 0;
         // record delta for next iteration as 0
-        newState.prevDelta = [0, 0];
+        newState.prevClient = [null, null];
       } else {
         // Early return if no change after constraints
         if (width === _this2.state.width && height === _this2.state.height) return;
         newState.width = width;
         newState.height = height;
 
-        // record delta for next iteration
-        newState.prevDelta = [deltaX, deltaY];
-      }
-      // If we have a resize handle being dragged left X wise, we need to apply a special offset transform
-      var inverted = false;
-      if (axis.includes('w')) {
-        inverted = true;
+        // record client for next iteration
+        newState.prevClient = [clientX, clientY];
       }
 
       var hasCb = typeof _this2.props[handlerName] === 'function';
